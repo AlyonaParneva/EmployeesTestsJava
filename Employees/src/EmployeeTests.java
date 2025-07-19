@@ -1,3 +1,6 @@
+import office.Department;
+import office.Service;
+
 import java.sql.*;
 
 public class EmployeeTests {
@@ -9,6 +12,7 @@ public class EmployeeTests {
         updateAnnDepartmentToHR();
         fixLowercaseNames();
         countEmployeesInIT();
+        testDepartmentDeleteCascade();
     }
 
     public static void updateAnnDepartmentToHR() {
@@ -82,6 +86,28 @@ public class EmployeeTests {
             if (rs.next()) {
                 int count = rs.getInt(1);
                 System.out.println("Количество сотрудников в IT: " + count);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void testDepartmentDeleteCascade() {
+        int departmentId = 2;
+
+        Service.removeDepartment(new Department(departmentId, "IT"));
+
+        try (Connection con = DriverManager.getConnection(EmployeeTests.DB_URL, EmployeeTests.DB_USER, EmployeeTests.DB_PASS)) {
+            PreparedStatement ps = con.prepareStatement("SELECT COUNT(*) FROM Employee WHERE DepartmentID = ?");
+            ps.setInt(1, departmentId);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                int count = rs.getInt(1);
+                if (count == 0) {
+                    System.out.println("Все сотрудники из отдела IT удалены.");
+                } else {
+                    System.out.println("Найдено сотрудников в удалённом отделе: " + count);
+                }
             }
         } catch (SQLException e) {
             e.printStackTrace();
